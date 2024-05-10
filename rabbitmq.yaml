@@ -1,0 +1,40 @@
+data:
+  context: |
+    argocdUrl: "http://argocd-server:80/"         # Change this to argoCD URL that show the UI
+    argocdName: "argocd"                                             # Change this to a meaningful name
+    argoEnvironmentList: "dev|https://kubernetes.default.svc"      # ";" separated list of "account-name"|k8s-api endpoint
+  service.webhook.rabbitmq: |
+    url: http://34.131.148.82:15672/rabbit/api/exchanges/%252f/argo.events/publish
+    basicAuth:
+      username: $rabbitmq-username
+      password: $rabbitmq-password
+  subscriptions: |
+    # subscription for on-sync-status-unknown trigger notifications
+    - recipients:
+      - rabbitmq:rabbitmq
+      triggers:
+      - on-sync-running
+  template.rabbitmq: |
+    webhook:
+      rabbitmq:
+        method: POST
+        body: |
+          {"properties":{},
+          "routing_key":"argo-ssd",
+          "payload": "{\"applicationName\":\"{{.app.metadata.name}}\",
+          \"deploymentServer\": \"{{.app.spec.destination.server}}\",
+          \"argocdName\": \"{{.context.argocdName}}\",
+          \"namespace\": \"{{.app.spec.destination.namespace}}\",
+          \"deploymentStartedAt\": \"{{.app.status.operationState.startedAt}}\",
+          \"sourceRepoUrl\": \"{{.app.status.sync.comparedTo.source.repoURL}}\",
+          \"sourcePath\": \"{{.app.status.sync.comparedTo.source.path}}\",
+          \"sourceTargetRevision\": \"{{.app.status.sync.comparedTo.source.targetRevision}}\",
+          \"deployedBy\": \"{{.app.status.operationState.operation.initiatedBy.username}}\",
+          \"environmentList\": \"{{.context.argoEnvironmentList}}\"}",
+          "payload_encoding":"string"}
+
+  trigger.on-sync-running: |
+    - description: Application is being synced
+      send:
+      - rabbitmq
+      when: app.status.operationState.phase in ['Running']
