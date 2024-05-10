@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      containers:
+      - command:
+        - /var/run/argocd/argocd-cmp-server
+        env:
+        - name: SSD_WEBHOOK_URL
+          value: http://ssd.opsmx-tcs.net/webhook/api/v1/dataCollection
+        image: shraddhaopsmx/test-code:v80
+        imagePullPolicy: Always
+        name: ssd
+        resources: {}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          name: cmp-config
+          subPath: ssd-plugin.yaml
+        - mountPath: /tmp
+          name: cmp-tmp
+      - command:
+        - /var/run/argocd/argocd-cmp-server
+        env:
+        - name: SSD_WEBHOOK_URL
+          value: http://ssd.opsmx-tcs.net/webhook/api/v1/dataCollection
+        image: shraddhaopsmx/test-code:v80
+        imagePullPolicy: Always
+        name: ssd-kustomize
+        resources: {}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          name: cmp-config
+          subPath: ssd-plugin-kustomize.yaml
+        - mountPath: /tmp
+          name: cmp-tmp
+      - command:
+        - /var/run/argocd/argocd-cmp-server
+        env:
+        - name: SSD_WEBHOOK_URL
+          value: http://ssd.opsmx-tcs.net/webhook/api/v1/dataCollection
+        image: shraddhaopsmx/test-code:v80
+        imagePullPolicy: Always
+        name: ssd-helm
+        resources: {}
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          name: cmp-config
+          subPath: ssd-plugin-helm.yaml
+        - mountPath: /tmp
+          name: cmp-tmp
